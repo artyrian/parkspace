@@ -1,1 +1,6 @@
 This catalog is for MaskRCNN models: baseline detectinng and trained on custom images.
+
+Download here model mask_rcnn_coco.h5 from https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5
+
+Baseline path:
+models/mask_rcnn_coco.h5

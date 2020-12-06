@@ -1,9 +1,10 @@
 # Parkspace
 
 Проект по поиск свободных парковочных мест по камерам сверху на основе размеченных заранее доступных мест для парковки.
-ML: https://github.com/matterport/Mask_RCNN
 
-### Предобученная модель: 
+Based on Mask RCNN lib. [Mask RCNN github](https://github.com/matterport/Mask_RCNN)
+
+**Предобученная модель:** 
 - скачать в каталог `./models`: [mask_rcnn_coco.h5](https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5)
 
 Пример запуска на предобученной модели, baseline:
@@ -11,12 +12,16 @@ ML: https://github.com/matterport/Mask_RCNN
 
 ## Сбор датасета
 
-Сохранение изображений с камеры в настоящий момент.
-```python src/devline.py --url <server_url> --port <server_port --user <user> --password <password> --dir cams```
+Сохранение изображений с камеры в настоящий момент:
+```
+python src/devline.py --url <server_url> --port <server_port --user <user> --password <password> --dir cams
+```
+
+[Devline API](https://devline.ru/aboutweb/#cams)
 
 Если нет возможности подключиться к серверу видеонаблюдения, можно собрать первый датасет для разметки и проверки вручную.
 
-# Первый запуск
+## Первый запуск
 
 Запуск с предобученной моделью:
 
@@ -29,19 +34,19 @@ python detect.py
 - Результат: `out/`
 
 
-# Обучение
+## Обучение
 
-## Разметка
+### 1. Разметка
 - собрать train, val выборки
 - разметить при помощи via.html
 - подложить датасет и разметку по следующим путям
 
-## Обучение на размеченных данных
+### 2. Обучение на размеченных данных
 ```
 python src/train.py --dataset=dataset --weights=coco
 ```
 
-## Использование новой модели
+### 3. Использование новой модели
 
 tbd
 
@@ -49,3 +54,8 @@ tbd
 [link]: http://www.ya.ru
 
 [test]: http://ya.ru
+
+## Links
+- [Snagging Parking Spaces with Mask R-CNN and Python](https://medium.com/@ageitgey/snagging-parking-spaces-with-mask-r-cnn-and-python-955f2231c400)
+- [Object detection using Mask R-CNN on a custom dataset](https://towardsdatascience.com/object-detection-using-mask-r-cnn-on-a-custom-dataset-4f79ab692f6d)
+
