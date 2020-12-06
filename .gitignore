@@ -1,0 +1,18 @@
+logs
+venv
+
+# large files
+models/mask_rcnn_coco.h5
+
+# do not upload dataset data
+dataset/*
+cams
+
+# ide
+.idea
+
+# osx
+.DS_Store
+
+# local
+run_devline_local.sh
