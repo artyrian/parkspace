@@ -46,6 +46,10 @@ python detect.py
 python src/train.py --dataset=dataset --weights=coco
 ```
 
+ETA: 10-15 изображений для обучения, 30 эпох, gpu 1050Ti -> 20h
+
+Попробовать colab.research.google.com
+
 ### 3. Использование новой модели
 
 tbd
