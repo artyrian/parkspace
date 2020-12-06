@@ -14,6 +14,7 @@ import sys
 import json
 import numpy as np
 import skimage.draw
+import time
 
 # Root directory of the project
 ROOT_DIR = os.getcwd()
@@ -24,17 +25,75 @@ from mrcnn.config import Config
 from mrcnn import utils
 from mrcnn import model as modellib
 
-# Path to trained weights file
 COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, 'models', 'mask_rcnn_coco.h5')
 
-# Directory to save logs and model checkpoints, if not provided
-# through the command line argument --logs
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Train Mask R-CNN to detect car tops.')
+    parser.add_argument('--dataset', required=True,
+                        metavar='/path/to/dataset/',
+                        help='Directory of the car top dataset')
+    parser.add_argument('--weights', required=True,
+                        metavar='/path/to/weights.h5',
+                        help='Path to weights .h5 file or "coco"')
+    parser.add_argument('--logs', required=False,
+                        default=DEFAULT_LOGS_DIR,
+                        metavar='/path/to/logs/',
+                        help='Logs and checkpoints directory (default=logs/)')
+    parser.add_argument('--epochs', default=30,
+                        help='Count of iterations learning. Default 30.')
+    args = parser.parse_args()
+
+    print('Weights: ', args.weights)
+    print('Dataset: ', args.dataset)
+    print('Logs: ', args.logs)
+
+    # Configurations
+    config = CartopConfig()
+    config.display()
+    model = modellib.MaskRCNN(
+        mode='training',
+        config=config,
+        model_dir=args.logs
+    )
+    load_weights_to_model(args.weights, model)
+
+    train(model, args.dataset, args.epochs)
 
 
 ############################################################
 #  Configurations
 ############################################################
+
+def load_weights_to_model(weights, model):
+    if weights.lower() == 'coco':
+        weights_path = COCO_WEIGHTS_PATH
+        if not os.path.exists(weights_path):
+            utils.download_trained_weights(weights_path)
+    elif weights.lower() == 'last':
+        weights_path = model.find_last()[1]
+    elif weights.lower() == 'imagenet':
+        weights_path = model.get_imagenet_weights()
+    else:
+        weights_path = weights
+
+    print('Loading weights ', weights_path)
+    if weights.lower() == 'coco':
+        model.load_weights(
+            weights_path,
+            by_name=True,
+            exclude=[
+                'mrcnn_class_logits',
+                'mrcnn_bbox_fc',
+                'mrcnn_bbox',
+                'mrcnn_mask'
+            ]
+        )
+    else:
+        model.load_weights(weights_path, by_name=True)
 
 
 class CartopConfig(Config):
@@ -131,15 +190,15 @@ class CartopDataset(utils.Dataset):
             super(self.__class__, self).image_reference(image_id)
 
 
-def train(model):
+def train(model, dataset, epochs):
     """Train the model."""
     dataset_train = CartopDataset()
-    dataset_train.load_cartop(args.dataset, 'train')
+    dataset_train.load_cartop(dataset, 'train')
     dataset_train.prepare()
 
     # Validation dataset
     dataset_val = CartopDataset()
-    dataset_val.load_cartop(args.dataset, 'val')
+    dataset_val.load_cartop(dataset, 'val')
     dataset_val.prepare()
 
     # *** This training schedule is an example. Update to your needs ***
@@ -148,9 +207,12 @@ def train(model):
     # no need to train all layers, just the heads should do it.
     print('Training network heads')
     model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE,
-                epochs=30,
+                learning_rate=Config.LEARNING_RATE,
+                epochs=epochs,
                 layers='heads')
+
+    model_path = 'mask_rcnn_' + '.' + str(time.time()) + '.h5'
+    model.keras_model.save_weights(os.path.join(ROOT_DIR, model_path))
 
 
 ############################################################
@@ -158,53 +220,4 @@ def train(model):
 ############################################################
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Train Mask R-CNN to detect car tops.')
-    parser.add_argument('--dataset', required=True,
-                        metavar='/path/to/dataset/',
-                        help='Directory of the car top dataset')
-    parser.add_argument('--weights', required=True,
-                        metavar='/path/to/weights.h5',
-                        help='Path to weights .h5 file or "coco"')
-    parser.add_argument('--logs', required=False,
-                        default=DEFAULT_LOGS_DIR,
-                        metavar='/path/to/logs/',
-                        help='Logs and checkpoints directory (default=logs/)')
-    args = parser.parse_args()
-
-    print('Weights: ', args.weights)
-    print('Dataset: ', args.dataset)
-    print('Logs: ', args.logs)
-
-    # Configurations
-    config = CartopConfig()
-    config.display()
-    model = modellib.MaskRCNN(mode='training', config=config,
-                              model_dir=args.logs)
-    if args.weights.lower() == 'coco':
-        weights_path = COCO_WEIGHTS_PATH
-        if not os.path.exists(weights_path):
-            utils.download_trained_weights(weights_path)
-    elif args.weights.lower() == 'last':
-        # Find last trained weights
-        weights_path = model.find_last()[1]
-    elif args.weights.lower() == 'imagenet':
-        # Start from ImageNet trained weights
-        weights_path = model.get_imagenet_weights()
-    else:
-        weights_path = args.weights
-
-    # Load weights
-    print('Loading weights ', weights_path)
-    if args.weights.lower() == 'coco':
-        # Exclude the last layers because they require a matching
-        # number of classes
-        model.load_weights(weights_path, by_name=True, exclude=[
-            'mrcnn_class_logits',
-            'mrcnn_bbox_fc',
-            'mrcnn_bbox',
-            'mrcnn_mask'])
-    else:
-        model.load_weights(weights_path, by_name=True)
-
-    train(model)
+    main()

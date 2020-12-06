@@ -1,3 +1,4 @@
+import argparse
 import cv2
 import glob
 import numpy as np
@@ -8,11 +9,7 @@ from pathlib import Path
 from mrcnn import config
 from mrcnn.model import MaskRCNN
 
-ROOT_DIR = Path('.')
-IMAGES_DIR = os.path.join(ROOT_DIR, 'dataset', 'data')
-OUT_IMAGES_DIR = os.path.join(ROOT_DIR, 'out')
-MODEL_DIR = os.path.join(ROOT_DIR, 'logs')
-COCO_MODEL_PATH = os.path.join(ROOT_DIR, 'models', 'mask_rcnn_coco.h5')
+MODEL_DIR = 'logs'
 
 
 # Configuration that will be used by the Mask-RCNN library
@@ -20,7 +17,7 @@ class MaskRCNNConfig(config.Config):
     NAME = 'coco_pretrained_model_config'
     IMAGES_PER_GPU = 1
     GPU_COUNT = 1
-    NUM_CLASSES = 1 + 80  # COCO dataset has 80 classes + one background class
+    NUM_CLASSES = 1 + 1  # COCO dataset has 80 classes + one background class
     DETECTION_MIN_CONFIDENCE = 0.6
 
 
@@ -37,20 +34,27 @@ def get_car_boxes(boxes, class_ids):
     return np.array(car_boxes)
 
 
-def get_path_images():
-    return glob.glob(os.path.join(IMAGES_DIR, '*.jpg'))
-
-
 def main():
-    model = MaskRCNN(mode='inference', model_dir=MODEL_DIR, config=MaskRCNNConfig())
+    parser = argparse.ArgumentParser(
+        description='Train Mask R-CNN to detect car tops.')
+    parser.add_argument('--data', required=True,
+                        metavar='/path/to/data/',
+                        help='Directory with images to detect')
+    parser.add_argument('--weights', required=True,
+                        metavar='/path/to/weights.h5',
+                        help='Path to weights .h5 file')
+    parser.add_argument('--out', required=True,
+                        metavar='/path/to/out',
+                        help='Directory for out images with detected objects')
+    args = parser.parse_args()
 
-    # Load pre-trained model
-    model.load_weights(COCO_MODEL_PATH, by_name=True)
+    model = MaskRCNN(mode='inference', model_dir=MODEL_DIR, config=MaskRCNNConfig())
+    model.load_weights(args.weights, by_name=True)
 
     # Location of parking spaces
     parked_car_boxes = None
 
-    images_list = get_path_images()
+    images_list = glob.glob(os.path.join(args.data, '*.jpg'))
     for img_path in images_list:
         frame = cv2.imread(img_path)
         rgb_image = frame[:, :, ::-1]
@@ -84,9 +88,11 @@ def main():
 
             index += 1
 
-        # mrcnn.visualize.display_images([frame])
+        if not os.path.exists(args.out):
+            os.mkdir(args.out)
+
         frame_name = os.path.basename(img_path)
-        cv2.imwrite(os.path.join(OUT_IMAGES_DIR, frame_name), frame)
+        cv2.imwrite(os.path.join(args.out, frame_name), frame)
 
 
 if __name__ == '__main__':
