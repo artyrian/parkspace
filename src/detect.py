@@ -1,12 +1,12 @@
-import glob
-import os
-import numpy as np
 import cv2
+import glob
+import numpy as np
+import os
 
-import mrcnn2.config
-import mrcnn2.visualize
-from mrcnn2.model import MaskRCNN
 from pathlib import Path
+
+from mrcnn import config
+from mrcnn.model import MaskRCNN
 
 ROOT_DIR = Path('.')
 IMAGES_DIR = os.path.join(ROOT_DIR, 'dataset', 'data')
@@ -16,7 +16,7 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, 'models', 'mask_rcnn_coco.h5')
 
 
 # Configuration that will be used by the Mask-RCNN library
-class MaskRCNNConfig(mrcnn2.config.Config):
+class MaskRCNNConfig(config.Config):
     NAME = 'coco_pretrained_model_config'
     IMAGES_PER_GPU = 1
     GPU_COUNT = 1
