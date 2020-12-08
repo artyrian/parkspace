@@ -1,40 +1,61 @@
 import argparse
 import cv2
 import glob
-import numpy as np
+import logging
 import os
 
-from pathlib import Path
+import numpy as np
 
 from mrcnn import config
+from mrcnn import visualize
 from mrcnn.model import MaskRCNN
 
 MODEL_DIR = 'logs'
 
+RED_COLOR = (0, 0, 255)  # BGR
+WHITE_COLOR = (255, 255, 255)
+
 
 # Configuration that will be used by the Mask-RCNN library
 class MaskRCNNConfig(config.Config):
-    NAME = 'coco_pretrained_model_config'
+    NAME = 'mask_trained_model_config'
     IMAGES_PER_GPU = 1
     GPU_COUNT = 1
-    NUM_CLASSES = 1 + 1  # COCO dataset has 80 classes + one background class
-    DETECTION_MIN_CONFIDENCE = 0.6
+    NUM_CLASSES = 1 + 1
+    DETECTION_MIN_CONFIDENCE = 0.7
 
 
-# Filter a list of Mask R-CNN detection results to get only the detected cars / trucks
-def get_car_boxes(boxes, class_ids):
-    car_boxes = []
+class CarDetection:
 
-    for i, box in enumerate(boxes):
-        print('class id:', class_ids[i])
-        # If the detected object isn't a car / truck, skip it
-        if class_ids[i] in [3, 8, 6]:
-            car_boxes.append(box)
+    def __init__(self, box, mask, score):
+        self.box = box
+        self.mask = mask
+        self.score = score
 
-    return np.array(car_boxes)
+
+class CarTopDetector:
+
+    def __init__(self, weights_path):
+        model = MaskRCNN(mode='inference', model_dir=MODEL_DIR, config=MaskRCNNConfig())
+        model.load_weights(weights_path, by_name=True)
+
+        self.model = model
+
+    def detect(self, frame):
+        rgb_image = frame[:, :, ::-1]
+        results = self.model.detect([rgb_image], verbose=0)  # todo: use frames list
+        r = results[0]  # r data: rois, class_ids, scores, masks
+
+        result = []
+        for box, mask, score in zip(r['rois'], r['masks'], r['scores']):
+            result.append(CarDetection(box, mask, score))
+
+        return result
 
 
 def main():
+    logging.basicConfig(format='%(asctime)-15s %(levelname)s %(message)s', level=logging.INFO)
+
     parser = argparse.ArgumentParser(
         description='Train Mask R-CNN to detect car tops.')
     parser.add_argument('--data', required=True,
@@ -48,48 +69,22 @@ def main():
                         help='Directory for out images with detected objects')
     args = parser.parse_args()
 
-    model = MaskRCNN(mode='inference', model_dir=MODEL_DIR, config=MaskRCNNConfig())
-    model.load_weights(args.weights, by_name=True)
+    if not os.path.exists(args.out):
+        os.mkdir(args.out)
 
-    # Location of parking spaces
-    parked_car_boxes = None
+    detector = CarTopDetector(weights_path=args.weights)
 
     images_list = glob.glob(os.path.join(args.data, '*.jpg'))
+
     for img_path in images_list:
+        logging.info('load frame %s', img_path)
         frame = cv2.imread(img_path)
-        rgb_image = frame[:, :, ::-1]
-        results = model.detect([rgb_image], verbose=0)
-
-        # Mask R-CNN assumes we are running detection on multiple images.
-        # We only passed in one image to detect, so only grab the first result.
-        r = results[0]
-        print('keys:', r.keys())
-
-        # The r variable will now have the results of detection:
-        # - r['rois'] are the bounding box of each detected object
-        # - r['class_ids'] are the class id (type) of each detected object
-        # - r['scores'] are the confidence scores for each detection
-        # - r['masks'] are the object masks for each detected object (which gives you the object outline)
-
-        # car_boxes = get_car_boxes(r['rois'], r['class_ids'])
-
-        index = 0
-        for box in r['rois']:
-            class_id = r['class_ids'][index]
-            print('detected id:', class_id)
-            y1, x1, y2, x2 = box
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
-            cv2.putText(frame,
-                        text='id: {}'.format(class_id),
-                        org=(x1, y1),
-                        fontFace=cv2.FONT_HERSHEY_PLAIN,
-                        fontScale=1.5,
-                        color=(255, 255, 255))
-
-            index += 1
-
-        if not os.path.exists(args.out):
-            os.mkdir(args.out)
+        result = detector.detect(frame)
+        for detection in result:
+            y1, x1, y2, x2 = detection.box
+            cv2.rectangle(frame, (x1, y1), (x2, y2), RED_COLOR, 1)
+            cv2.putText(frame, text='P', org=(x1, y1),
+                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=WHITE_COLOR)
 
         frame_name = os.path.basename(img_path)
         cv2.imwrite(os.path.join(args.out, frame_name), frame)

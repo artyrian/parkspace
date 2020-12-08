@@ -2,7 +2,7 @@ logs
 venv
 
 # large files
-models/mask_rcnn_coco.h5
+models/*.h5
 
 # do not upload dataset data
 dataset/*
@@ -16,3 +16,5 @@ cams
 
 # local
 run_devline_local.sh
+run_detect_local.sh
+
