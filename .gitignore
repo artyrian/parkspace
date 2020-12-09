@@ -1,5 +1,6 @@
 logs
 venv
+src/__pycache__
 
 # large files
 models/*.h5
@@ -17,4 +18,5 @@ cams
 # local
 run_devline_local.sh
 run_detect_local.sh
+run_live_local.sh
 

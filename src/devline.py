@@ -12,10 +12,7 @@ ACCEPT_TYPE_JSON = 'application/json'
 ACCEPT_TYPE_IMAGE = 'application/jpeg'
 
 
-def main():
-    logging.basicConfig(format='%(asctime)-15s %(levelname)s %(message)s', level=logging.INFO)
-
-    parser = argparse.ArgumentParser(description='Connect and downlod pics fromm devline cams server.')
+def add_parsing_args(parser):
     parser.add_argument('--url', required=True, metavar='cam.example.ru',
                         help='URL or IP to server')
     parser.add_argument('--port', required=True, metavar='1234',
@@ -24,11 +21,18 @@ def main():
                         help='User for devline server API')
     parser.add_argument('--password', required=True, metavar='password@#1!',
                         help='Password for user devline server API')
-    parser.add_argument('--dir', required=True, metavar='/path/to/dir',
+    parser.add_argument('--dir', required=False, metavar='/path/to/dir',
                         help='Directory to save screens from cameras')
+
+
+def main():
+    logging.basicConfig(format='%(asctime)-15s %(levelname)s %(message)s', level=logging.INFO)
+
+    parser = argparse.ArgumentParser(description='Connect and downlod pics fromm devline cams server.')
+    add_parsing_args(parser)
     args = parser.parse_args()
 
-    if not os.path.exists(args.dir):
+    if args.dir and not os.path.exists(args.dir):
         os.mkdir(args.dir)
 
     img_suffix = str(round(time.time()))  # use timestamp to uniq names on different runs script
@@ -40,8 +44,9 @@ def main():
 
     for cam in cameras:
         logging.info('camera: %s', cam['name'])
-        path_to_img = _path_img(args.dir, cam['name'], img_suffix)
-        client.screen_camera(cam, path_to_img)
+        if args.dir:
+            path_to_img = _path_img(args.dir, cam['name'], img_suffix)
+            client.screen_camera(cam, path_to_img)
 
 
 def _path_img(dir_to, cam_name, suffix):
@@ -70,10 +75,15 @@ class DevLineCameraApi:
         if kwargs.get('headers'):
             headers.update(kwargs['headers'])
 
+        params = {}
+        if kwargs.get('params'):
+            params.update(kwargs['params'])
+
         resp = requests.get(
             url,
             auth=(self.user, self.password),
             headers=headers,
+            params=params,
         )
         resp.raise_for_status()
         return resp
@@ -85,17 +95,27 @@ class DevLineCameraApi:
         )
         return resp.json()
 
-    def _camera_image(self, image_uri):
+    def _camera_image(self, image_uri, quality=0, keep_aspect_ratio=0):
+        params = {
+            'quality': quality,
+            'keep_aspect_ratio': keep_aspect_ratio,
+        }
+
         resp = self._get(
             image_uri,
-            headers={'Content-Type': 'image/jpeg'}
+            headers={'Content-Type': 'image/jpeg'},
+            params=params,
         )
         return resp
 
-    def screen_camera(self, cam, path_img):
+    def camera_image(self, cam):
         resp = self._camera_image(cam['image-uri'])
-        if resp.content:
-            self._to_file(resp.content, path_img)
+        return resp.content if resp else None
+
+    def screen_camera(self, cam, path_img):
+        img = self.camera_image(cam)
+        if img:
+            self._to_file(img, path_img)
         else:
             logging.warning('Empty data from cam %s', cam['name'])
 

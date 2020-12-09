@@ -22,7 +22,7 @@ class MaskRCNNConfig(config.Config):
     IMAGES_PER_GPU = 1
     GPU_COUNT = 1
     NUM_CLASSES = 1 + 1
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0.8
 
 
 class CarDetection:
@@ -53,6 +53,14 @@ class CarTopDetector:
         return result
 
 
+def mark(frame, detections):
+    for item in detections:
+        y1, x1, y2, x2 = item.box
+        cv2.rectangle(frame, (x1, y1), (x2, y2), RED_COLOR, 1)
+        cv2.putText(frame, text='P', org=(x1, y1),
+                    fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=WHITE_COLOR)
+
+
 def main():
     logging.basicConfig(format='%(asctime)-15s %(levelname)s %(message)s', level=logging.INFO)
 
@@ -79,12 +87,8 @@ def main():
     for img_path in images_list:
         logging.info('load frame %s', img_path)
         frame = cv2.imread(img_path)
-        result = detector.detect(frame)
-        for detection in result:
-            y1, x1, y2, x2 = detection.box
-            cv2.rectangle(frame, (x1, y1), (x2, y2), RED_COLOR, 1)
-            cv2.putText(frame, text='P', org=(x1, y1),
-                        fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=WHITE_COLOR)
+        detections = detector.detect(frame)
+        mark(frame, detections)
 
         frame_name = os.path.basename(img_path)
         cv2.imwrite(os.path.join(args.out, frame_name), frame)
