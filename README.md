@@ -10,6 +10,18 @@ Based on Mask RCNN lib. [Mask RCNN github](https://github.com/matterport/Mask_RC
 Пример запуска на предобученной модели, baseline:
 ![baseline](samples/sample_img_maskrcnn_detect_baseline.jpg)
 
+## Настройка окружения
+
+Нужен python3.7 (c 3.8 и выше первая версия tf недоступна).
+
+```
+virtualenv --python=/usr/bin/python3.7 venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+```
+
+
 ## Сбор датасета
 
 Сохранение изображений с камеры в настоящий момент:

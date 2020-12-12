@@ -1,7 +1,9 @@
-keras==2.0.8
-mrcnn==0.1
+h5py==2.1
+IPython
+keras==2.3
+mrcnn
 numpy==1.18.5
-opencv-contrib-python==4.4.0
-scikit-image==0.17.2
-scipy==1.5.4
+opencv-contrib-python
+scikit-image
+scipy
 tensorflow==1.15
