@@ -4,8 +4,6 @@ import glob
 import logging
 import os
 
-import numpy as np
-
 from mrcnn import config
 from mrcnn import visualize
 from mrcnn.model import MaskRCNN
@@ -45,9 +43,11 @@ class CarTopDetector:
         rgb_image = frame[:, :, ::-1]
         results = self.model.detect([rgb_image], verbose=0)  # todo: use frames list
         r = results[0]  # r data: rois, class_ids, scores, masks
+        objects = r['rois'].shape[0]
 
         result = []
-        for box, mask, score in zip(r['rois'], r['masks'], r['scores']):
+        for box, score, index in zip(r['rois'], r['scores'], range(objects)):
+            mask = r['masks'][:, :, index]
             result.append(CarDetection(box, mask, score))
 
         return result
@@ -59,6 +59,7 @@ def mark(frame, detections):
         cv2.rectangle(frame, (x1, y1), (x2, y2), RED_COLOR, 1)
         cv2.putText(frame, text='P', org=(x1, y1),
                     fontFace=cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=WHITE_COLOR)
+        frame = visualize.apply_mask(frame, item.mask, [0, 0, 1])
 
 
 def main():

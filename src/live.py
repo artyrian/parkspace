@@ -30,7 +30,7 @@ def main():
 
     if args.cameras:
         with open(args.cameras, 'r') as f:
-            cameras = yaml.load(f.read())
+            cameras = yaml.load(f.read(), Loader=yaml.FullLoader)
     else:
         cameras = client.cameras_list()
 
