@@ -1,3 +1,6 @@
+# local configs
+conf
+
 logs
 venv
 src/__pycache__
