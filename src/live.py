@@ -2,6 +2,7 @@ import argparse
 import logging
 import time
 import traceback
+import yaml
 
 import cv2
 import numpy as np
@@ -20,12 +21,19 @@ def main():
     parser.add_argument('--weights', required=True,
                         metavar='/path/to/weights.h5',
                         help='Path to weights .h5 file')
+    parser.add_argument('--cameras', required=False,
+                        help='Path to cameras list YAML config or use all available by API to detect.')
     args = parser.parse_args()
 
     client = devline.DevLineCameraApi(args.url, args.port, args.user, args.password)
     detector = detect.CarTopDetector(args.weights)
 
-    cameras = client.cameras_list()
+    if args.cameras:
+        with open(args.cameras, 'r') as f:
+            cameras = yaml.load(f.read())
+    else:
+        cameras = client.cameras_list()
+
     while True:
         safe_detect(client, cameras, detector)
         time.sleep(IDLE_DETECTING_LOOP_SEC)
@@ -34,6 +42,7 @@ def main():
 def safe_detect(client, cameras, detector):
     for cam in cameras:
         name = cam['name']
+        comment = cam.get('comment', name)
 
         try:
             img_data = client.camera_image(cam)
@@ -44,11 +53,12 @@ def safe_detect(client, cameras, detector):
             img = cv2.imdecode(np.frombuffer(img_data, np.uint8), 1)
             cv2.imwrite('dataset/live/in/{}.jpg'.format(name.replace('/', '__')), img)
 
-            logging.info('start detecting...')
+            start = time.time()
             detections = detector.detect(img)
-            logging.info('mark result')
             detect.mark(img, detections)
-            logging.info('detected cars: %d on zone %s', len(detections), cam['name'])
+            spent = time.time() - start
+            logging.info('zone %s - %d cars on (cam: %s, detecting %0.2f s.)',
+                         comment, len(detections), name, spent)
             cv2.imwrite('dataset/live/out/{}.jpg'.format(name.replace('/', '__')), img)
         except Exception as e:
             traceback.print_exc()

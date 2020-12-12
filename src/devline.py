@@ -3,6 +3,7 @@ import logging
 import os
 import requests
 import time
+import yaml
 
 from urllib.parse import urljoin
 
@@ -23,6 +24,8 @@ def add_parsing_args(parser):
                         help='Password for user devline server API')
     parser.add_argument('--dir', required=False, metavar='/path/to/dir',
                         help='Directory to save screens from cameras')
+    parser.add_argument('--cameras-list', required=False, metavar='path/to/conf.yaml',
+                        help='Save cameras list to yaml file')
 
 
 def main():
@@ -40,13 +43,25 @@ def main():
 
     client = DevLineCameraApi(args.url, args.port, args.user, args.password)
     cameras = client.cameras_list()
+    if args.cameras_list:
+        cameras_yaml = [Camera(x['name'], x['image-uri']) for x in cameras]
+        with open(args.cameras_list, 'w') as f:
+            f.write(yaml.dump(cameras_yaml))
+
     logging.info('cameras list: %d items', len(cameras))
 
     for cam in cameras:
-        logging.info('camera: %s', cam['name'])
+        logging.info('camera: %s %s', cam['name'], cam['image-uri'])
         if args.dir:
             path_to_img = _path_img(args.dir, cam['name'], img_suffix)
             client.screen_camera(cam, path_to_img)
+
+
+class Camera:
+
+    def __init__(self, name, image_uri):
+        self.name = name
+        self.image_uri = image_uri
 
 
 def _path_img(dir_to, cam_name, suffix):
