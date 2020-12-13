@@ -1,6 +1,6 @@
 h5py==2.1
 IPython
-keras==2.3
+keras==2.2.5
 mrcnn
 numpy==1.18.5
 opencv-contrib-python

@@ -43,8 +43,8 @@ def main():
                         default=DEFAULT_LOGS_DIR,
                         metavar='/path/to/logs/',
                         help='Logs and checkpoints directory (default=logs/)')
-    parser.add_argument('--epochs', default=30,
-                        help='Count of iterations learning. Default 30.')
+    parser.add_argument('--epochs', default=10,
+                        help='Count of iterations learning. Default 10.')
     args = parser.parse_args()
 
     print('Weights: ', args.weights)
@@ -105,13 +105,13 @@ class CartopConfig(Config):
 
     # We use a GPU with 12GB memory, which can fit two images.
     # Adjust down if you use a smaller GPU.
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 1  # Background + baloon
 
     # Number of training steps per epoch
-    STEPS_PER_EPOCH = 100
+    STEPS_PER_EPOCH = 50
 
     # Skip detections with < 90% confidence
     DETECTION_MIN_CONFIDENCE = 0.9
@@ -134,7 +134,7 @@ class CartopDataset(utils.Dataset):
         assert subset in ['train', 'val']
         dataset_dir = os.path.join(dataset_dir, subset)
 
-        data_json_path = os.path.join(dataset_dir, 'zknk_roof.json')
+        data_json_path = os.path.join(dataset_dir, 'data.json')
         with open(data_json_path, 'r') as f:
             annotations = json.loads(f.read())
             annotations = annotations['_via_img_metadata']
