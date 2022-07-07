@@ -13,6 +13,9 @@ Based on Mask RCNN lib. [Mask RCNN github](https://github.com/matterport/Mask_RC
 ## Настройка окружения
 
 Нужен python3.7 (c 3.8 и выше первая версия tf недоступна).
+Use this fix to update python to 3.10 and tf to newer versions. (model.py patch)
+https://github.com/matterport/Mask_RCNN/issues/2783#issuecomment-1157215745
+or try to use this version for mrcnn (https://github.com/akTwelve/Mask_RCNN/) without fixes.
 
 ```
 virtualenv --python=/usr/bin/python3.7 venv
