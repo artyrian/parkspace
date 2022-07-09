@@ -1,10 +1,7 @@
 bin
-
-
-# local configs
 conf
-
 logs
+env
 venv
 src/__pycache__
 
@@ -14,15 +11,9 @@ models/*.h5
 # do not upload dataset data
 dataset/*
 cams
+out
+train
+val
 
 # ide
 .idea
-
-# osx
-.DS_Store
-
-# local
-run_devline_local.sh
-run_detect_local.sh
-run_live_local.sh
-
