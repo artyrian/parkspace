@@ -24,6 +24,9 @@ pip install -r requirements.txt
 
 ```
 
+Скачать CUDA toolkit:
+https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=runfile_local
+(проверить версию для gcc в системе)
 
 ## Сбор датасета
 
@@ -41,7 +44,7 @@ python src/devline.py --url <server_url> --port <server_port --user <user> --pas
 Запуск с предобученной моделью Mask RCNN, скачанной на этапе подготовки:
 
 ```
-python src/detect.py --weights models/mask_rcnn_coco.h5  --data <images_dir> -out <out_images_detected_dir>
+python src/detect.py --weights models/mask_rcnn_coco.h5  --data <images_dir> --out <out_images_detected_dir>
 ```
 
 На выходе сложит размеченные изображения, с распознанными машинами в указанную директорию.
