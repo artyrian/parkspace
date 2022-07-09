@@ -35,7 +35,16 @@ class CarTopDetector:
 
     def __init__(self, weights_path):
         model = MaskRCNN(mode='inference', model_dir=MODEL_DIR, config=MaskRCNNConfig())
-        model.load_weights(weights_path, by_name=True)
+        model.load_weights(
+            weights_path,
+            by_name=True,
+            exclude=[
+                'mrcnn_class_logits',
+                'mrcnn_bbox_fc',
+                'mrcnn_bbox',
+                'mrcnn_mask'
+            ]
+        )
 
         self.model = model
 
