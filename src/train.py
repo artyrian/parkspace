@@ -12,9 +12,12 @@ import argparse
 import os
 import sys
 import json
+import logging
+import time
+
 import numpy as np
 import skimage.draw
-import time
+
 
 # Root directory of the project
 ROOT_DIR = os.getcwd()
@@ -31,6 +34,8 @@ DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, 'logs')
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     parser = argparse.ArgumentParser(
         description='Train Mask R-CNN to detect car tops.')
     parser.add_argument('--dataset', required=True,
@@ -47,9 +52,9 @@ def main():
                         help='Count of iterations learning. Default 10.')
     args = parser.parse_args()
 
-    print('Weights: ', args.weights)
-    print('Dataset: ', args.dataset)
-    print('Logs: ', args.logs)
+    logging.info('Weights: ', args.weights)
+    logging.info('Dataset: ', args.dataset)
+    logging.info('Logs: ', args.logs)
 
     # Configurations
     config = CartopConfig()
@@ -69,6 +74,8 @@ def main():
 ############################################################
 
 def load_weights_to_model(weights, model):
+    logging.info('load weights: %s, model: %s', weights, model)
+
     if weights.lower() == 'coco':
         weights_path = COCO_WEIGHTS_PATH
         if not os.path.exists(weights_path):
@@ -80,7 +87,7 @@ def load_weights_to_model(weights, model):
     else:
         weights_path = weights
 
-    print('Loading weights ', weights_path)
+    logging.info('Loading weights ', weights_path)
     if weights.lower() == 'coco':
         model.load_weights(
             weights_path,
@@ -205,7 +212,7 @@ def train(model, dataset, epochs):
     # Since we're using a very small dataset, and starting from
     # COCO trained weights, we don't need to train too long. Also,
     # no need to train all layers, just the heads should do it.
-    print('Training network heads')
+    logging.info('Training network heads')
     model.train(dataset_train, dataset_val,
                 learning_rate=Config.LEARNING_RATE,
                 epochs=epochs,
